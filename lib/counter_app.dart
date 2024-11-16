@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart'; // For playing sound
 
 class CountdownTimerScreen extends StatefulWidget {
   @override
@@ -11,6 +12,7 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
   Duration _timeRemaining = Duration(minutes: 1); // Default time (1 minute)
   Duration _initialTime = Duration(minutes: 1);
   bool _isRunning = false;
+  final AudioPlayer _audioPlayer = AudioPlayer(); // Initialize audio player
 
   // Start Timer
   void _startTimer() {
@@ -20,15 +22,21 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
       _isRunning = true;
     });
 
-    _timer = Timer.periodic(Duration(milliseconds: 1), (timer) {
+    _timer = Timer.periodic(Duration(milliseconds: 10), (timer) {
       setState(() {
-        if (_timeRemaining.inMicroseconds > 0) {
-          _timeRemaining = _timeRemaining - Duration(milliseconds: 1);
+        if (_timeRemaining.inMilliseconds > 0) {
+          _timeRemaining = _timeRemaining - Duration(milliseconds: 10);
         } else {
           _stopTimer();
+          _playCompletionSound(); // Play sound when timer completes
         }
       });
     });
+  }
+
+  // Play sound when timer ends
+  void _playCompletionSound() {
+    _audioPlayer.play(AssetSource('assets/sounds/timer_end.mp3'));
   }
 
   // Stop Timer
@@ -57,15 +65,15 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
     });
   }
 
-  // Format Duration to HH:MM:SS:μS (with microseconds)
+  // Format Duration to HH:MM:SS:MS (with two-digit milliseconds)
   String _formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     String hours = twoDigits(duration.inHours);
     String minutes = twoDigits(duration.inMinutes.remainder(60));
     String seconds = twoDigits(duration.inSeconds.remainder(60));
-    String microseconds =
-        twoDigits((duration.inMicroseconds.remainder(1000000) ~/ 1000));
-    return "$hours:$minutes:$seconds:$microseconds";
+    String milliseconds =
+        twoDigits((duration.inMilliseconds.remainder(1000)) ~/ 10);
+    return "$hours:$minutes:$seconds:$milliseconds";
   }
 
   // Show Time Picker for User to Set Time
@@ -88,6 +96,7 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
   @override
   void dispose() {
     _timer?.cancel(); // Clean up the timer when the widget is disposed
+    _audioPlayer.dispose(); // Dispose audio player
     super.dispose();
   }
 
@@ -96,11 +105,14 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.deepPurple,
-        title: const Text('Countdown Timer'),
+        title: const Text(
+          'Countdown Timer',
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.deepPurpleAccent, Colors.blueAccent],
             begin: Alignment.topCenter,
@@ -114,7 +126,7 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
             children: [
               Text(
                 _formatTime(_timeRemaining),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 60,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -129,9 +141,9 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
                     onPressed: _isRunning ? null : () => _pickTime(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.pinkAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      textStyle: TextStyle(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 15),
+                      textStyle: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -144,9 +156,9 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                           _isRunning ? Colors.redAccent : Colors.green,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      textStyle: TextStyle(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 15),
+                      textStyle: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -158,9 +170,9 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
                     onPressed: _resetTimer,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orangeAccent,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      textStyle: TextStyle(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 15),
+                      textStyle: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -170,7 +182,7 @@ class _CountdownTimerScreenState extends State<CountdownTimerScreen> {
                 ],
               ),
               const SizedBox(height: 30),
-              Text(
+              const Text(
                 'Time Remaining Progress',
                 style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
